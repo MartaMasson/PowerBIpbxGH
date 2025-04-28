@@ -1,0 +1,132 @@
+<<<<<<< HEAD
+#NÃO UTILIZAR ESSE ARQUIVO. Ele considera apenas os arquivos diferentes entre o commit anterior e atual. 
+
+=======
+>>>>>>> 5d9ab2d6fe1a9e9c00ab12c38db3994e29ed1c18
+trigger:
+  branches:
+    exclude:
+    - '*'
+
+#trigger:
+#  branches:
+#    include:
+#    - Dev
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  - group: pbideploysecrets  # Variable group
+  - name: workspaceName
+    value: teste-dev
+  - name: branchName
+    value: Dev
+ 
+steps:
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 2  # Fetches the last two commits
+
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '5.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- task: PowerShell@2
+  displayName: 'Download dependencies'
+  inputs:
+    pwsh: true
+    targetType: inline
+    script: |
+      $path = "$(Build.SourcesDirectory)"
+      Write-Host "##[debug] Path: $path"
+
+      $workingFolder = "$path/.ado"
+
+      New-Item -ItemType Directory -Path "$workingFolder/modules" -ErrorAction SilentlyContinue | Out-Null
+
+      Write-Host "##[debug]Downloading FabricPS-PBIP module"
+
+        @(
+          "https://raw.githubusercontent.com/microsoft/Analysis-Services/master/pbidevmode/fabricps-pbip/FabricPS-PBIP.psm1",
+          "https://raw.githubusercontent.com/microsoft/Analysis-Services/master/pbidevmode/fabricps-pbip/FabricPS-PBIP.psd1") |% {
+                        
+            Invoke-WebRequest -Uri $_ -OutFile "$workingFolder/modules/$(Split-Path $_ -Leaf)"
+          }
+
+          Write-Host "##[debug]Installing Az.Accounts"
+          if(-not (Get-Module Az.Accounts -ListAvailable)){
+            Install-Module Az.Accounts -Scope CurrentUser -Force -AllowClobber
+            Import-Module Az.Accounts
+          }
+
+          Write-Host "##[debug]Installing MicrosoftPowerBIMgmt"
+          if(-not (Get-Module MicrosoftPowerBIMgmt -ListAvailable)){
+            Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber
+            Import-Module MicrosoftPowerBIMgmt
+          }
+
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+
+      $appId = "$(AppId)"
+      $appSecret = "$(ClientSecret)"
+      $tenantId = "$(TenantId)"
+
+      Write-Host "##[debug] git fetch origin ... "
+      git fetch origin
+
+      git checkout $(branchName)
+
+      git pull origin $(branchName)
+
+      Write-Host "##[debug] git log -1 --pretty=format:"%H" ..."
+      git log -1 --pretty=format:"%H"
+      $currentCommit = git log -1 --pretty=format:"%H"
+
+      Write-Host "##[debug] git log -2 --pretty=format:"%H" | Select-Object -Last 1 ... "
+      git log -2 --pretty=format:"%H" | Select-Object -Last 1
+      $previousCommit = git log -2 --pretty=format:"%H" | Select-Object -Last 1
+
+      Write-Host "##[debug] git diff --name-only $previousCommit $currentCommit ... "
+      git diff --name-only $previousCommit $currentCommit
+      $changedFiles = git diff --name-only $previousCommit $currentCommit
+
+      $pbixFiles = $changedFiles | Where-Object { $_ -like "*.pbix" }
+      if ($pbixFiles.Count -gt 0) {
+        Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber
+        Import-Module MicrosoftPowerBIMgmt
+
+        Import-Module MicrosoftPowerBIMgmt.Profile
+        Import-Module MicrosoftPowerBIMgmt.Reports        
+
+        Write-Host "##[debug]Authentication with SPN"
+
+        #Set-FabricAuthToken -servicePrincipalId $appId -servicePrincipalSecret $appSecret -tenantId $tenantId -reset
+
+        Write-Host "##[debug]Ensure Fabric Workspace & permissions"
+
+        #Create secure string & credential for application id and client secret
+        $PbiSecurePassword = ConvertTo-SecureString $appSecret -Force -AsPlainText
+        $PbiCredential = New-Object Management.Automation.PSCredential($appId, $PbiSecurePassword)
+
+        #Connect to the Power BI service
+        Connect-PowerBIServiceAccount -ServicePrincipal -TenantId $tenantId -Credential $PbiCredential
+        foreach ($file in $pbixFiles) { # including the path
+          $reportName = [System.IO.Path]::GetFileNameWithoutExtension($file)
+
+          New-PowerBIReport -Path $(Build.SourcesDirectory)/$file -Name $reportName -Workspace ( Get-PowerBIWorkspace -Name $(workspaceName) ) -ConflictAction CreateOrOverwrite
+          Write-Host "##[debug] Deploying PBIX file changed: $file"
+        }
+      } else {
+        Write-Host "##[debug] No PBIX files changed. Skipping deployment."
+      }
+  displayName: 'Deploy Changed PBIX Files'
+      
+
+      

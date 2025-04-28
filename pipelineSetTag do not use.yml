@@ -1,0 +1,71 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: pbideploysecrets  # Variable group
+
+steps:
+- checkout: self
+  persistCredentials: true
+
+- powershell: |
+    #Setting variables
+    #$appId = "$(AppId)"
+    #$appSecret = "$(ClientSecret)"
+    #$tenantId = "$(TenantId)"
+
+    $buildDateTime = Get-Date -Format "yyyyMMddHHmmss"
+    $attribute = "metadata=devDeployDate=$($buildDateTime)"
+
+    # Getting the pbix files list from the Repos.
+    Write-Host "##[debug] Getting pbix report files to deploy in workspace"
+    $pbixReports = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter *.pbix
+
+    ##az login --service-principal -u $appId -p $appSecret --tenant $tenantId
+    #git remote set-url origin https://$appId:$appSecret@dev.azure.com/MngEnvMCAP843707/PowerBIpbx/PowerBIpbx
+    #git fetch origin
+
+    # To each file in the list of pbix files, set attribute
+    foreach ($reportFile in $pbixReports) { # including the path
+      Write-Host "##[debug] PBIX file full name: $($reportFile.FullName)" # Including path
+
+      # Adicionar atributo ao arquivo .gitattributes
+      Write-Host "##[debug] Adding attribute to the file: $($attribute)" 
+      Add-Content -Path "$(Build.SourcesDirectory)\.gitattributes" -Value "$($reportFile.FullName) $($attribute)"
+      Write-Host "##[debug] Attribute added with success!"
+    
+      # Commit e push das mudanças
+      git config --global user.name "SPN"
+      git config --global user.email "admin@MngEnvMCAP843707.onmicrosoft.com"
+      git add .gitattributes
+    }
+    git commit -m "Adding attrib to the file that was deployed to Dev"
+    git push origin HEAD
+  displayName: 'Adicionar Atributo ao Arquivo'
+
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    #  clientId: $(clientId)
+    #  clientSecret: $(clientSecret)
+    #  tenantId: $(tenantId)
+
+- checkout: self
+
+- powershell: |
+
+    # Getting the pbix files list from the Repos.
+    Write-Host "##[debug] Getting pbix report files to deploy in workspace"
+    $pbixReports = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter *.pbix
+
+    # To each file in the list of pbix files, set attribute
+    foreach ($reportFile in $pbixReports) { # including the path
+      Write-Host "##[debug] PBIX file full name: $($reportFile.FullName)" # Including path
+
+      # Obter atributo do arquivo
+      $attribute = git check-attr metadata  $($reportFile.FullName)
+      Write-Host "Atributo do arquivo: $attribute"
+    }
+  displayName: 'Recuperar Atributo do Arquivo'
