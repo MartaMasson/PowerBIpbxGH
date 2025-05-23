@@ -56,7 +56,7 @@ jobs:
         if (-Not (Test-Path -Path ".gitattributes")) {
           New-Item -ItemType File -Path ".gitattributes"
         }
-        $gitattributesPath = "$(Build.SourcesDirectory)\.gitattributes" # Getting content from attributes file
+        $gitattributesPath = "$env:GITHUB_WORKSPACE\.gitattributes" # Getting content from attributes file
         Write-Host "##[debug] Getting .gitattributes files path: $($gitattributesPath)"
 
         #Create secure string & credential for application id and client secret
@@ -71,7 +71,7 @@ jobs:
 
         # Getting the pbix files lit from the Repos.
         Write-Host "##[debug] Getting pbix report files to deploy in workspace $(workspaceName)"
-        $pbixReports = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter *.pbix
+        $pbixReports = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter *.pbix
 
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
@@ -133,7 +133,7 @@ jobs:
               #updating the attribute indicating the file was deployed in the powerbi workspace
               If ($attributeAction -eq "add") { #Attribute 
                 Write-Host "##[debug] Adding attribute to the file: $($attribute)" 
-                Add-Content -Path "$(Build.SourcesDirectory)\.gitattributes" -Value "$($reportNameWithoutSpaces) $($attribute)"
+                Add-Content -Path "$env:GITHUB_WORKSPACE\.gitattributes" -Value "$($reportNameWithoutSpaces) $($attribute)"
                 Write-Host "##[debug] Attribute added with success!"
               } else {
                 Write-Host "##[debug] The file was changed after the last deployment. Updating the report in the workspace.
