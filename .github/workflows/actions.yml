@@ -25,7 +25,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '5.x'
+        dotnet-version: '7.x'
 
     - name: Run PowerShell script
       run: |
@@ -65,12 +65,12 @@ jobs:
         $PbiCredential = New-Object Management.Automation.PSCredential($appId, $PbiSecurePassword)
 
         # Connecting to the Power BI service and getting the workspace.
-        Write-Host "##[debug] Connecting to the PowerBi Services and Workspace $(workspaceName)."
+        Write-Host "##[debug] Connecting to the PowerBi Services and Workspace $($env:workspaceName)."
         Connect-PowerBIServiceAccount -ServicePrincipal -TenantId $tenantId -Credential $PbiCredential
-        $workspaceObj = Get-PowerBIWorkspace -Name $(workspaceName)
+        $workspaceObj = Get-PowerBIWorkspace -Name $($env:workspaceName)
 
         # Getting the pbix files lit from the Repos.
-        Write-Host "##[debug] Getting pbix report files to deploy in workspace $(workspaceName)"
+        Write-Host "##[debug] Getting pbix report files to deploy in workspace $($env:workspaceName)"
         $pbixReports = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter *.pbix
 
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
@@ -125,10 +125,10 @@ jobs:
           }
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
-              Write-Host "##[debug] Depolying $reportName report in the $(workspaceName)."
+              Write-Host "##[debug] Depolying $reportName report in the $($env:workspaceName)."
               New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
               #Set-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace workspaceObj
-              Write-Host "##[debug] Report $reportName updated in workspace $(workspaceName) sucessfully."
+              Write-Host "##[debug] Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
               #updating the attribute indicating the file was deployed in the powerbi workspace
               If ($attributeAction -eq "add") { #Attribute 
@@ -141,7 +141,7 @@ jobs:
                 Write-Host "##[debug] Changing attribute in the file: $($attribute)"
                 (Get-Content $gitattributesPath) -replace "$($reportNameWithoutSpaces) $($attributeName)=.*", "$($reportNameWithoutSpaces) $($attribute)" | Set-Content $gitattributesPath
                 Write-Host "##[debug] Attribute changed with success!"
-                #Write-Host "##[debug] The report $reportName was not updated in the workspace $(workspaceName)."
+                #Write-Host "##[debug] The report $reportName was not updated in the workspace $($env:workspaceName)."
               }
           }
 
