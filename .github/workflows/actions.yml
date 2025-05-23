@@ -30,7 +30,7 @@ jobs:
     - name: Run PowerShell script
       run: |
         #Setting variables
-        $appId = "${{secrets.APPID}}
+        $appId = "${{secrets.APPID}}"
         $appSecret = "${{secrets.CLIENTSECRET}}"
         $tenantId = "${{secrets.TENANTID}}"
 
