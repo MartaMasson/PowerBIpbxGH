@@ -1,9 +1,12 @@
 name: CIPbix
 
 on:
+  workflow_dispatch:
   push:
-    branches-ignore:
-      - '*'
+    # Remove or update this to ignore only specific branches
+    # branches-ignore:
+    #   - 'main'
+
 
 jobs:
   build:
