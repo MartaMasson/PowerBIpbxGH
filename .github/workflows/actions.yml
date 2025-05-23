@@ -30,9 +30,9 @@ jobs:
     - name: Run PowerShell script
       run: |
         #Setting variables
-        $appId = "$(APPID)"
-        $appSecret = "$(CLIENTSECRET)"
-        $tenantId = "$(TENANTID)"
+        $appId = "${{secrets.APPID}}
+        $appSecret = "${{secrets.CLIENTSECRET}}"
+        $tenantId = "${{secrets.TENANTID}}"
 
         #Import-Module MicrosoftPowerBIMgmt
         Write-Host "##[debug] Installing Power BI Management module"
