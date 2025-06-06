@@ -40,7 +40,6 @@ jobs:
 
         #Import-Module MicrosoftPowerBIMgmt
         Get-PSRepository
-        Register-PSRepository -Default
         Update-PSModuleSource
         Write-Host "Installing Power BI Management module"
         Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber
