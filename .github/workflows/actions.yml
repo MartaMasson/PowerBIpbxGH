@@ -48,7 +48,7 @@ jobs:
         git config --global user.email "admin@MngEnvMCAP843707.onmicrosoft.com"
         Write-Host "Git user configured"
 
-        # Setting the attribute value to the files that will be deployed in this execution. 
+        # Setting the attribute value to the files that will be deployed in this execution.
         $buildDateTime = Get-Date -Format "yyyyMMddHHmmss"
         $attributeName = "DeployOnDevDate"
         $attribute = "$($attributeName)=$($buildDateTime)"
@@ -73,7 +73,7 @@ jobs:
 
         # Getting the pbix files lit from the Repos.
         Write-Host "Getting pbix report files to deploy in workspace $($env:workspaceName)"
-        $pbixReports = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter *.pbix
+        $pbixReports = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter "*.pbix"
 
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
@@ -118,7 +118,8 @@ jobs:
             Write-Host "The report will be deployed in the workspace."
 
           } else { # attribute is set in the attribute file
-            if ($lastChangeFormattedDate -gt $attributeValue) { #The file was changed after the last deployment, then it needs to be updated in the workspace. A new deployment date is set.
+            if ($lastChangeFormattedDate -gt $attributeValue) { 
+              #The file was changed after the last deployment, then it needs to be updated in the workspace. A new deployment date is set.
               Write-Host "The report will be updated in the workspace."
             } else {
               Write-Host "The file was not changed after the last deployment. Skipping the deployment."
@@ -138,7 +139,7 @@ jobs:
                 Add-Content -Path "$env:GITHUB_WORKSPACE\.gitattributes" -Value "$($reportNameWithoutSpaces) $($attribute)"
                 Write-Host "Attribute added with success!"
               } else {
-                Write-Host "The file was changed after the last deployment. Updating the report in the workspace.
+                Write-Host "The file was changed after the last deployment. Updating the report in the workspace".
                 # Changing attribute in the file .gitattributes
                 Write-Host "Changing attribute in the file: $($attribute)"
                 (Get-Content $gitattributesPath) -replace "$($reportNameWithoutSpaces) $($attributeName)=.*", "$($reportNameWithoutSpaces) $($attribute)" | Set-Content $gitattributesPath
@@ -151,7 +152,7 @@ jobs:
         # Commit and push changes
         Write-Host "Updating the file in the repository"
         git add .gitattributes
-        git commit -m 'Adding attribute to the file'
+        git commit -m "Adding attribute to the file"
         git push origin HEAD:refs/heads/master
 
       shell: pwsh
