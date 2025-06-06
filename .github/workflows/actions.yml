@@ -131,9 +131,8 @@ jobs:
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "Deplolying $reportFile.FullName report in the $($env:workspaceName)."
-              $env:GITHUB_TOKEN = "${{ secrets.GITHUB_TOKEN }}"
-              New-PowerBIReport -Path $path -Name $reportName -Workspace $workspaceObj
-              #Set-PowerBIReport -Path $path -Name $reportName -Workspace workspaceObj
+              New-PowerBIReport -Path "$env:GITHUB_WORKSPACE\Reports" -Name $reportName -Workspace $workspaceObj
+              #Set-PowerBIReport -Path "$env:GITHUB_WORKSPACE\Reports" -Name $reportName -Workspace workspaceObj
               Write-Host "Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
               #updating the attribute indicating the file was deployed in the powerbi workspace
