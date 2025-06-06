@@ -128,7 +128,7 @@ jobs:
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "##[debug] Depolying $reportName report in the $($env:workspaceName)."
-              New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
+              #New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
               #Set-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace workspaceObj
               Write-Host "##[debug] Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
