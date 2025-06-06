@@ -151,7 +151,7 @@ jobs:
         # Commit and push changes
         Write-Host "Updating the file in the repository"
         git add .gitattributes
-        git commit -m "Adding attribute to the file"
+        git commit -m 'Adding attribute to the file'
         git push origin HEAD:refs/heads/master
 
       shell: pwsh
