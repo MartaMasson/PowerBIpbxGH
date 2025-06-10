@@ -26,15 +26,11 @@ jobs:
         persist-credentials: true
         fetch-depth: 0
 
-    - name: Ensure Reports directory exists and set permissions
+    - name: Check directory permissions
       run: |
-        $reportsPath = "$env:GITHUB_WORKSPACE\Reports\"
-        if (-not (Test-Path $reportsPath)) {
-          New-Item -ItemType Directory -Path $reportsPath | Out-Null
-        }
-        icacls $reportsPath /grant "*S-1-5-32-545":F /T
-        icacls $reportsPath
-      shell: pwsh
+        dir D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
+        icacls D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
+      shell: cmd
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
