@@ -28,9 +28,9 @@ jobs:
 
     - name: Set directory permissions before execution
       run: |
-        icacls "$env:GITHUB_WORKSPACE\Reports\Reports" /grant Everyone:F
-        mkdir -p "$env:GITHUB_WORKSPACE\Reports\Reports"
-        ls -l "$env:GITHUB_WORKSPACE\Reports\Reports"
+        icacls "$env:GITHUB_WORKSPACE\Reports" /grant Everyone:F
+        mkdir -p "$env:GITHUB_WORKSPACE\Reports"
+        ls -l "$env:GITHUB_WORKSPACE\Reports"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
