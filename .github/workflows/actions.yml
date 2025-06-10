@@ -26,10 +26,15 @@ jobs:
         persist-credentials: true
         fetch-depth: 0
 
-    - name: Set directory permissions before execution
+    - name: Ensure Reports directory exists and set permissions
       run: |
-        icacls "$env:GITHUB_WORKSPACE\Reports" /grant Everyone:F
-        ls -l "$env:GITHUB_WORKSPACE\Reports"
+        $reportsPath = "$env:GITHUB_WORKSPACE\Reports\"
+        if (-not (Test-Path $reportsPath)) {
+          New-Item -ItemType Directory -Path $reportsPath | Out-Null
+        }
+        icacls $reportsPath /grant "*S-1-5-32-545":F /T
+        icacls $reportsPath
+      shell: pwsh
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
@@ -137,8 +142,8 @@ jobs:
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
-              New-PowerBIReport -Path "$($path)" -Name $reportName -Workspace $workspaceObj
-              #Set-PowerBIReport -Path "$($path)" -Name $reportName -Workspace workspaceObj
+              New-PowerBIReport -Path "$env:GITHUB_WORKSPACE/Reports/" -Name $reportName -Workspace $workspaceObj
+              #Set-PowerBIReport -Path "$($path)\" -Name $reportName -Workspace workspaceObj
               Write-Host "Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
               #updating the attribute indicating the file was deployed in the powerbi workspace
