@@ -28,9 +28,9 @@ jobs:
 
     - name: Check directory permissions
       run: |
-        dir D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
-        icacls D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
-      shell: cmd
+        Get-ChildItem -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
+        Get-Acl -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
+      shell: pwsh
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
