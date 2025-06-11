@@ -1,4 +1,5 @@
 # Do not forget to give permissions to the runner to write in the repository.
+# Do not forget to start the Power BI Embedded service in the Azure Portal.
 
 name: CIPbix
 
