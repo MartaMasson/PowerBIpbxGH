@@ -139,20 +139,29 @@ jobs:
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "  Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
-              try {
-                New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj -ConflictAction Overwrite
-                #Set-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace workspaceObj
-                Write-Host "  Report $reportName updated in workspace $($env:workspaceName) successfully."
-              } catch {
-                Write-Host "  Error deploying report: $_"
-                throw $_
+              Write-Host "  Checking if the report $($reportName) already exists in the workspace..."
+              $reportPbi = Get-PowerBIReport -Name $reportName -Workspace $workspaceObj
+              if ($reportPbi) {
+                  # Report exists, overwrite it
+                  Write-Host "  Yes, the report $($reportName) already exists in the workspace $($env:workspaceName)."
+                  Write-Host "  Report details:"
+                  Write-Host "  Report ID: $($reportPbi.Id)"
+                  Write-Host "  Report Name: $($reportPbi.Name)"
+                  Write-Host "  Web URL: $($reportPbi.WebUrl)"
+                  Write-Host "  Created By: $($reportPbi.CreatedBy)"
+                  Write-Host "  Created Date: $($reportPbi.CreatedDate)"
+                  New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj -ConflictAction Overwrite
+                  Write-Host "  Report $reportName updated in workspace $($env:workspaceName) sucessfully."
+              }
+              else {
+                  Write-Host "  No, the report $($reportName) does not exist in the workspace $($env:workspaceName)."
+                  New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
+                  Write-Host "  Report $reportName created in workspace $($env:workspaceName) successfully."
               }
 
-              Write-Host "  Report $reportName updated in workspace $($env:workspaceName) sucessfully."
-
               #updating the attribute indicating the file was deployed in the powerbi workspace
-              If ($attributeAction -eq "add") { #Attribute 
-                Write-Host "  Adding attribute to the file: $($attribute)" 
+              If ($attributeAction -eq "add") { #Attribute
+                Write-Host "  Adding attribute to the file: $($attribute)"
                 Add-Content -Path "$env:GITHUB_WORKSPACE\.gitattributes" -Value "$($reportNameWithoutSpaces) $($attribute)"
                 Write-Host "  Attribute added with success!"
               } else {
