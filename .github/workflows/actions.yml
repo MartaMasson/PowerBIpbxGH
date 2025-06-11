@@ -86,6 +86,12 @@ jobs:
 
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
+          Write-Host "PBIX file full name: $($reportFile.FullName)"
+          Write-Host "PBIX file name: $($reportFile.Name)"
+          Write-Host "PBIX file directory: $($reportFile.DirectoryName)"
+          Write-Host "PBIX file size: $($reportFile.Length)"
+          Write-Host "PBIX file last modified: $($reportFile.LastWriteTime)"
+        
           Write-Host "PBIX file full name: $($reportFile.FullName)"
 
           # Getting the complet path+file name.
