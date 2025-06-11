@@ -140,15 +140,15 @@ jobs:
               Write-Host "Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
               try {
                 $pathFile = $reportFile.DirectoryName + $reportFile.Name
-                Write-Host "Path + file: $($pathFile)"
+                Write-Host "Path + "\" + file: $($pathFile)"
                 New-PowerBIReport -Path $pathFile -Name $reportName -Workspace $workspaceObj
+                #Set-PowerBIReport -Path $pathFile -Name $reportName -Workspace workspaceObj
                 Write-Host "Report $reportName updated in workspace $($env:workspaceName) successfully."
               } catch {
                 Write-Host "Error deploying report: $_"
                 throw $_
               }
 
-              #Set-PowerBIReport -Path "$($path)\" -Name $reportName -Workspace workspaceObj
               Write-Host "Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
               #updating the attribute indicating the file was deployed in the powerbi workspace
