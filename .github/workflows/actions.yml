@@ -82,42 +82,42 @@ jobs:
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
           Write-Host "PBIX file full name: $($reportFile.FullName)"
-          Write-Host "PBIX file name: $($reportFile.Name)"
-          Write-Host "PBIX file directory: $($reportFile.DirectoryName)"
-          Write-Host "PBIX file size: $($reportFile.Length)"
-          Write-Host "PBIX file last modified: $($reportFile.LastWriteTime)"
+          Write-Host "  PBIX file name: $($reportFile.Name)"
+          Write-Host "  PBIX file directory: $($reportFile.DirectoryName)"
+          Write-Host "  PBIX file size: $($reportFile.Length)"
+          Write-Host "  PBIX file last modified: $($reportFile.LastWriteTime)"
         
-          Write-Host "PBIX file full name: $($reportFile.FullName)"
+          Write-Host "  PBIX file full name: $($reportFile.FullName)"
 
           # Getting the complet path+file name.
-          $path = [System.IO.Path]::GetDirectoryName($reportFile.FullName)
-          Write-Host "PBIX file path: $($path)"
+          $path = $($reportFile.DirectoryName)
+          Write-Host "  PBIX file path: $($path)"
           
           # Getting the the report name without the extension and path either.
           $reportName = [System.IO.Path]::GetFileNameWithoutExtension($reportFile)
-          Write-Host "PBIX file report name: $($reportName)"
+          Write-Host "  PBIX file report name: $($reportName)"
 
           # Removing spaces from report name to search in attributes file.
           $reportNameWithoutSpaces = $reportName -replace "\s", ""
-          Write-Host "PBIX file report name without spaces: $($reportNameWithoutSpaces)"
+          Write-Host "  PBIX file report name without spaces: $($reportNameWithoutSpaces)"
 
           # Searcning attribute from report in attributes file.
           $attributeOutput = git check-attr $attributeName $reportNameWithoutSpaces
           $attributeOutput = $attributeOutput.Trim()
-          Write-Host "attributeOutput: $($attributeOutput)"
+          Write-Host "  attributeOutput: $($attributeOutput)"
 
           # Finally getting the value for the file attribute.
           $attributeOutput -match "$($attributeName):\s*(.*)"
           $attributeValue = $matches[1].Trim()
-          Write-Host "attributeValue: $($attributeValue)"
+          Write-Host "  attributeValue: $($attributeValue)"
 
           # Getting information from the last time the file was changed.
           $LastChange = git log -1 --follow --format=%cd --date=iso -- $reportFile.FullName
-          Write-Host "Data do Último Commit que Modificou o Arquivo: $LastChange"
+          Write-Host "  Data do Último Commit que Modificou o Arquivo: $LastChange"
 
           #Getting the datatime from the last change in the file.
           $lastChangeFormattedDate = [datetime]::ParseExact($lastChange, "yyyy-MM-dd HH:mm:ss zzz", [System.Globalization.CultureInfo]::InvariantCulture).ToString("yyyyMMddHHmmss")                
-          Write-Host "Data do Último Commit que Modificou o Arquivo formatada: $lastChangeFormattedDate"
+          Write-Host "  Data do Último Commit que Modificou o Arquivo formatada: $lastChangeFormattedDate"
 
           $uplodadPbxFile = "true"
           $attributeAction = "update"
@@ -125,51 +125,52 @@ jobs:
           if (-not $attributeOutput -or $attributeValue -eq "unspecified" -or $attributeValue -eq "unset") { # attribute is not set in the attribute file 
             $attributeAction = "add"
             #  atributo será adocionado no arquivo .gitattributes
-            Write-Host "The report will be deployed in the workspace."
+            Write-Host "  The report will be deployed in the workspace."
 
           } else { # attribute is set in the attribute file
             if ($lastChangeFormattedDate -gt $attributeValue) { 
               #The file was changed after the last deployment, then it needs to be updated in the workspace. A new deployment date is set.
-              Write-Host "The report will be updated in the workspace."
+              Write-Host "  The report will be updated in the workspace."
             } else {
-              Write-Host "The file was not changed after the last deployment. Skipping the deployment."
+              Write-Host "  The file was not changed after the last deployment. Skipping the deployment."
               $uplodadPbxFile = false
             }
           }
 
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
-              Write-Host "Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
+              Write-Host "  Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
               try {
                 $pathFile = $reportFile.DirectoryName + "\" + $reportFile.Name
-                Write-Host "Path file: $($pathFile)"
-                New-PowerBIReport -Path $pathFile -Name $reportName -Workspace $workspaceObj
+                Write-Host "  Path file: $($pathFile)"
+                #New-PowerBIReport -Path $pathFile -Name $reportName -Workspace $workspaceObj
+                New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
                 #Set-PowerBIReport -Path $pathFile -Name $reportName -Workspace workspaceObj
-                Write-Host "Report $reportName updated in workspace $($env:workspaceName) successfully."
+                Write-Host "  Report $reportName updated in workspace $($env:workspaceName) successfully."
               } catch {
-                Write-Host "Error deploying report: $_"
+                Write-Host "  Error deploying report: $_"
                 throw $_
               }
 
-              Write-Host "Report $reportName updated in workspace $($env:workspaceName) sucessfully."
+              Write-Host "  Report $reportName updated in workspace $($env:workspaceName) sucessfully."
 
               #updating the attribute indicating the file was deployed in the powerbi workspace
               If ($attributeAction -eq "add") { #Attribute 
-                Write-Host "Adding attribute to the file: $($attribute)" 
+                Write-Host "  Adding attribute to the file: $($attribute)" 
                 Add-Content -Path "$env:GITHUB_WORKSPACE\.gitattributes" -Value "$($reportNameWithoutSpaces) $($attribute)"
-                Write-Host "Attribute added with success!"
+                Write-Host "  Attribute added with success!"
               } else {
-                Write-Host "The file was changed after the last deployment. Updating the report in the workspace".
+                Write-Host "  The file was changed after the last deployment. Updating the report in the workspace".
                 # Changing attribute in the file .gitattributes
-                Write-Host "Changing attribute in the file: $($attribute)"
+                Write-Host "  Changing attribute in the file: $($attribute)"
                 (Get-Content $gitattributesPath) -replace "$($reportNameWithoutSpaces) $($attributeName)=.*", "$($reportNameWithoutSpaces) $($attribute)" | Set-Content $gitattributesPath
-                Write-Host "Attribute changed with success!"
-                #Write-Host "The report $reportName was not updated in the workspace $($env:workspaceName)."
+                Write-Host "  Attribute changed with success!"
+                #Write-Host "  The report $reportName was not updated in the workspace $($env:workspaceName)."
               }
           }
 
         }
         # Commit and push changes
-        Write-Host "Updating the file in the repository"
+        Write-Host "  Updating the file in the repository"
         git add .gitattributes
         git commit -m "Adding attribute to the file"
         git push origin HEAD:refs/heads/master
