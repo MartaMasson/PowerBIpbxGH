@@ -26,12 +26,6 @@ jobs:
         persist-credentials: true
         fetch-depth: 0
 
-    - name: Check directory permissions
-      run: |
-        Get-ChildItem -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
-        Get-Acl -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
-      shell: pwsh
-
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
@@ -86,11 +80,11 @@ jobs:
 
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
-          Write-Host "PBIX file full name: $($reportFile.FullName)"
-          Write-Host "PBIX file name: $($reportFile.Name)"
-          Write-Host "PBIX file directory: $($reportFile.DirectoryName)"
-          Write-Host "PBIX file size: $($reportFile.Length)"
-          Write-Host "PBIX file last modified: $($reportFile.LastWriteTime)"
+          Write-Host "PBIX file full name: $($reportFile.FullName)"
+          Write-Host "PBIX file name: $($reportFile.Name)"
+          Write-Host "PBIX file directory: $($reportFile.DirectoryName)"
+          Write-Host "PBIX file size: $($reportFile.Length)"
+          Write-Host "PBIX file last modified: $($reportFile.LastWriteTime)"
         
           Write-Host "PBIX file full name: $($reportFile.FullName)"
 
@@ -146,7 +140,7 @@ jobs:
               Write-Host "Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
               Get-ChildItem -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
               Get-Acl -Path D:\a\PowerBIpbxGH\PowerBIpbxGH\Reports
-              New-PowerBIReport -Path "$path" -Name $reportName -Workspace $workspaceObj
+              New-PowerBIReport -Path "$reportFile.FullName" -Name "$reportName" -Workspace "$workspaceObj"
               Resolve-PowerBIError
               #Set-PowerBIReport -Path "$($path)\" -Name $reportName -Workspace workspaceObj
               Write-Host "Report $reportName updated in workspace $($env:workspaceName) sucessfully."
