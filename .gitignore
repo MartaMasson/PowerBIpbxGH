@@ -5,6 +5,7 @@
 .history/
 .vshistory/
 
+.gitattributes
 
 conn.rdp
 conn.rdp
