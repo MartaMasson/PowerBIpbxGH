@@ -6,9 +6,8 @@ name: CIPbix
 on:
   workflow_dispatch:
   push:
-    # Remove or update this to ignore only specific branches
-    # branches-ignore:
-    #   - 'main'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -179,6 +178,6 @@ jobs:
         Write-Host "  Updating the file in the repository"
         git add .gitattributes
         git commit -m "Adding attribute to the file"
-        git push origin HEAD:refs/heads/master
+        git push origin HEAD:refs/heads/main
 
       shell: pwsh
