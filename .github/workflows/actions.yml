@@ -17,7 +17,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      workspaceName: teste
+      workspaceName: pbi-dev
 
     steps:
     - name: Checkout repository
@@ -37,47 +37,38 @@ jobs:
         $appId = "${{secrets.APPID}}"
         $appSecret = "${{secrets.CLIENTSECRET}}"
         $tenantId = "${{secrets.TENANTID}}"
-
         #Import-Module MicrosoftPowerBIMgmt
         Get-PSRepository
         Write-Host "Installing Power BI Management module"
         Install-Module -Name MicrosoftPowerBIMgmt -Force -AllowClobber
-
         Import-Module MicrosoftPowerBIMgmt.Profile
         Import-Module MicrosoftPowerBIMgmt.Reports
-
         # Configure Git user
         git config --global user.name "SPN"
         git config --global user.email "admin@MngEnvMCAP843707.onmicrosoft.com"
         Write-Host "Git user configured"
-
         # Setting the attribute value to the files that will be deployed in this execution.
         $buildDateTime = Get-Date -Format "yyyyMMddHHmmss"
         $attributeName = "DeployOnDevDate"
         $attribute = "$($attributeName)=$($buildDateTime)"
         Write-Host "Attribute value for this execution: $($attribute)"
-
         # Create .gitattributes file if it doesn't exist
         if (-Not (Test-Path -Path ".gitattributes")) {
           New-Item -ItemType File -Path ".gitattributes"
         }
         $gitattributesPath = "$env:GITHUB_WORKSPACE\.gitattributes" # Getting content from attributes file
         Write-Host "Getting .gitattributes files path: $($gitattributesPath)"
-
         #Create secure string & credential for application id and client secret
         Write-Host "Authentication with SPN & cheking permissions"
         $PbiSecurePassword = ConvertTo-SecureString $appSecret -Force -AsPlainText
         $PbiCredential = New-Object Management.Automation.PSCredential($appId, $PbiSecurePassword)
-
         # Connecting to the Power BI service and getting the workspace.
         Write-Host "Connecting to the PowerBi Services and Workspace $($env:workspaceName)."
         Connect-PowerBIServiceAccount -ServicePrincipal -TenantId $tenantId -Credential $PbiCredential
         $workspaceObj = Get-PowerBIWorkspace -Name $($env:workspaceName)
-
         # Getting the pbix files lit from the Repos.
         Write-Host "Getting pbix report files to deploy in workspace $($env:workspaceName)"
         $pbixReports = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Filter "*.pbix"
-
         # To each file in the list of pbix files, we will deploy the new and changed ones in the workspace.
         foreach ($reportFile in $pbixReports) { # including the path
           Write-Host "PBIX file full name: $($reportFile.FullName)"
@@ -87,7 +78,6 @@ jobs:
           Write-Host "  PBIX file last modified: $($reportFile.LastWriteTime)"
         
           Write-Host "  PBIX file full name: $($reportFile.FullName)"
-
           # Getting the complet path+file name.
           $path = $($reportFile.DirectoryName)
           Write-Host "  PBIX file path: $($path)"
@@ -95,37 +85,29 @@ jobs:
           # Getting the the report name without the extension and path either.
           $reportName = [System.IO.Path]::GetFileNameWithoutExtension($reportFile)
           Write-Host "  PBIX file report name: $($reportName)"
-
           # Removing spaces from report name to search in attributes file.
           $reportNameWithoutSpaces = $reportName -replace "\s", ""
           Write-Host "  PBIX file report name without spaces: $($reportNameWithoutSpaces)"
-
           # Searcning attribute from report in attributes file.
           $attributeOutput = git check-attr $attributeName $reportNameWithoutSpaces
           $attributeOutput = $attributeOutput.Trim()
           Write-Host "  attributeOutput: $($attributeOutput)"
-
           # Finally getting the value for the file attribute.
           $attributeOutput -match "$($attributeName):\s*(.*)"
           $attributeValue = $matches[1].Trim()
           Write-Host "  attributeValue: $($attributeValue)"
-
           # Getting information from the last time the file was changed.
           $LastChange = git log -1 --follow --format=%cd --date=iso -- $reportFile.FullName
           Write-Host "  Data do Último Commit que Modificou o Arquivo: $LastChange"
-
           #Getting the datatime from the last change in the file.
           $lastChangeFormattedDate = [datetime]::ParseExact($lastChange, "yyyy-MM-dd HH:mm:ss zzz", [System.Globalization.CultureInfo]::InvariantCulture).ToString("yyyyMMddHHmmss")                
           Write-Host "  Data do Último Commit que Modificou o Arquivo formatada: $lastChangeFormattedDate"
-
           $uplodadPbxFile = "true"
           $attributeAction = "update"
-
           if (-not $attributeOutput -or $attributeValue -eq "unspecified" -or $attributeValue -eq "unset") { # attribute is not set in the attribute file 
             $attributeAction = "add"
             #  atributo será adocionado no arquivo .gitattributes
             Write-Host "  The report will be deployed in the workspace."
-
           } else { # attribute is set in the attribute file
             if ($lastChangeFormattedDate -gt $attributeValue) { 
               #The file was changed after the last deployment, then it needs to be updated in the workspace. A new deployment date is set.
@@ -135,7 +117,6 @@ jobs:
               $uplodadPbxFile = false
             }
           }
-
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "  Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
               Write-Host "  Checking if the report $($reportName) already exists in the workspace..."
@@ -157,7 +138,6 @@ jobs:
                   New-PowerBIReport -Path $reportFile.FullName -Name $reportName -Workspace $workspaceObj
                   Write-Host "  Report $reportName created in workspace $($env:workspaceName) successfully."
               }
-
               #updating the attribute indicating the file was deployed in the powerbi workspace
               If ($attributeAction -eq "add") { #Attribute
                 Write-Host "  Adding attribute to the file: $($attribute)"
@@ -172,12 +152,10 @@ jobs:
                 #Write-Host "  The report $reportName was not updated in the workspace $($env:workspaceName)."
               }
           }
-
         }
         # Commit and push changes
         Write-Host "  Updating the file in the repository"
         git add .gitattributes
         git commit -m "Adding attribute to the file"
         git push origin HEAD:refs/heads/main
-
       shell: pwsh
