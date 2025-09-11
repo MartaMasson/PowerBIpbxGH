@@ -117,6 +117,7 @@ jobs:
               $uplodadPbxFile = false
             }
           }
+            
           if ($uplodadPbxFile -eq "true") { # PBIX file will be deployed in the workspace.
               Write-Host "  Deplolying $($reportFile.FullName) report in the $($env:workspaceName)."
               Write-Host "  Checking if the report $($reportName) already exists in the workspace..."
