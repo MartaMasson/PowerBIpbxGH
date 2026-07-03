@@ -33,7 +33,9 @@ jobs:
 
     - name: Run PowerShell script
       run: |
-        #Setting variables
+      # Teste
+
+      #Setting variables
         $appId = "${{secrets.APPID}}"
         $appSecret = "${{secrets.CLIENTSECRET}}"
         $tenantId = "${{secrets.TENANTID}}"
